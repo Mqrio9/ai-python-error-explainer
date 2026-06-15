@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Python Error Explainer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <main class="container">
+        <section class="hero">
+            <p class="badge">AI-powered app</p>
+            <h1>AI Python Error Explainer</h1>
+            <p class="subtitle">
+                Paste a Python error or broken code, and the AI explains it in simple beginner English.
+            </p>
+        </section>
+
+        <section class="card">
+            <label for="errorBox">Paste your Python error or code:</label>
+            <textarea id="errorBox" placeholder='Example: TypeError: can only concatenate str (not "int") to str'></textarea>
+
+            <button id="explainBtn" onclick="explainError()">Explain it</button>
+
+            <div id="status"></div>
+
+            <h2>AI Explanation</h2>
+            <pre id="answerBox">The explanation will appear here...</pre>
+        </section>
+
+        <section class="proof">
+            <h2>About this app</h2>
+            <p>
+                This is a real AI feature running in production. It sends your Python error to an AI model
+                and returns a beginner-friendly explanation.
+            </p>
+        </section>
+    </main>
+
+    <script>
+        async function explainError() {
+            const errorText = document.getElementById("errorBox").value.trim();
+            const answerBox = document.getElementById("answerBox");
+            const status = document.getElementById("status");
+            const button = document.getElementById("explainBtn");
+
+            if (!errorText) {
+                status.textContent = "Please paste a Python error or code first.";
+                answerBox.textContent = "No input was given.";
+                return;
+            }
+
+            status.textContent = "AI is thinking...";
+            answerBox.textContent = "";
+            button.disabled = true;
+
+            try {
+                const res = await fetch("/explain", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({error: errorText})
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || !data.ok) {
+                    status.textContent = "There was an issue.";
+                    answerBox.textContent = data.answer || "Unknown error.";
+                } else {
+                    status.textContent = "Done.";
+                    answerBox.textContent = data.answer;
+                }
+            } catch (err) {
+                status.textContent = "Network error.";
+                answerBox.textContent = "Could not connect to the server. Try again.";
+            }
+
+            button.disabled = false;
+        }
+    </script>
+</body>
+</html>

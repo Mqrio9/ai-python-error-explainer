@@ -1,10 +1,8 @@
 import os
 from flask import Flask, render_template, request, jsonify
-from openai import OpenAI
+from google import genai
 
 app = Flask(__name__)
-
-client = OpenAI()
 
 SYSTEM_INSTRUCTIONS = """
 You are an AI Python Error Explainer for beginner students.
@@ -37,22 +35,25 @@ def explain():
             "answer": "Please paste a Python error or code first."
         }), 400
 
-    if not os.getenv("OPENAI_API_KEY"):
+    if not os.getenv("GEMINI_API_KEY"):
         return jsonify({
             "ok": False,
-            "answer": "Server error: OPENAI_API_KEY is not set. Add your API key in your hosting environment variables."
+            "answer": "Server error: GEMINI_API_KEY is not set. Add your Gemini API key in your hosting environment variables."
         }), 500
 
     try:
-        response = client.responses.create(
-            model=os.getenv("OPENAI_MODEL", "gpt-5.5-mini"),
-            instructions=SYSTEM_INSTRUCTIONS,
-            input=f"Explain this Python error/code for a beginner:\n\n{user_text}"
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+        prompt = SYSTEM_INSTRUCTIONS + "\n\nExplain this Python error/code for a beginner:\n\n" + user_text
+
+        response = client.models.generate_content(
+            model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite"),
+            contents=prompt
         )
 
         return jsonify({
             "ok": True,
-            "answer": response.output_text
+            "answer": response.text
         })
 
     except Exception as e:
